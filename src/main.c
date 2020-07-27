@@ -6,7 +6,17 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <pthread.>
 
+#define NUMS 64
+#define WORKS 4
+
+void* worker(void *arg){
+	int *N = (int*) (arg);
+
+}
 int main() {
 
   int x, y;

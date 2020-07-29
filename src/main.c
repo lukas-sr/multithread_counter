@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <pthread.>
+#include <pthread.h>
 
 #define NUMS 32
 #define WORKERS 4
 
-pthread_mutex_t trava;
+pthread_mutex_t key;
 unsigned int vetor[NUMS], num_primos = 0, size_vet = 0;
 
 void input_vetor(){
@@ -14,7 +14,7 @@ void input_vetor(){
    char u;
 
    for ( l = 0 ; l < NUMS ; l++ ) {
-      u = scanf("%u", %vetor[l]);
+      u = scanf("%u", &vetor[l]);
 
       if( u == EOF ){
          size_vet = l;
@@ -23,41 +23,39 @@ void input_vetor(){
    }
 }
 
-void* worker(void arg*){
-   
-   
-   do {
-      pthread_mutex_lock(&trava);
 
+int verifica_primo(unsigned long int number){
 
-      pthread_mutex_unlock(&trava);
-   } while(num_primos <= NUMS);
+  int cont_div = 0, primos = 0;
 
-   return NULL;
-}
-
-
-unsigned long int verifica_primo(int number){
-
-  int cont_div = 0, n_primos = 0;
-
-  for(int j = 1; j <= number ; j++){
+  for(unsigned int j = 2; (j <= number) && (number>=2) ; j++){
   /* Se é divisor e o numero é != 1, +1 divisor encontrado */
-     if ((number % j == 0) && (j != 1)) cont_div++;
+     if ((number % j) == 0) cont_div++;
 
   /* Se encontrar 2 divisor, quebrar laço */
      if (cont_div > 1) break;
   }
  
   /* Se só houver 1 divisor, foi encontrado um número primo */
-  if (cont_div == 1) n_primos++;
+  if (cont_div == 1) primos++;
 
-  return n_primos;
+  return primos;
+  
 }
 
+void* worker(void *arg){
+   int *N = (int*)(arg);
+   int M = (*N);
+
+   for(unsigned int i = M; i < size_vet ; i+=WORKERS) {
+      pthread_mutex_lock(&key);
+      num_primos += verifica_primo(vetor[i]); 
+      pthread_mutex_unlock(&key);
+   }
+   return NULL;
+}
 
 int main() {
-
   pthread_t workers[WORKERS];
   int thread_id[WORKERS];
 
@@ -65,17 +63,15 @@ int main() {
   input_vetor();
 
   /* Identificadores de thread */
-  for (int i=0; i<WORKERS; i++) {
-    thread_id[i] = i;
-  }
+  for (int i=0; i<WORKERS; i++) thread_id[i] = i;
 
   /* Iniciando Threads */
-  for (int i=0; i<WORKERS; i++) {
-    pthread_create(&(workers[i]), NULL, worker, (void*) (&thread_id[i]));
-  }
+  for (int i=0; i<WORKERS; i++) pthread_create(&(workers[i]), NULL, worker, (void*) (&thread_id[i]));
 
   /* Esperando threads */
   for (int i=0; i<WORKERS; i++) pthread_join(workers[i], NULL);
+
+  printf("%d\n", num_primos);
 
   return 0;
 }
